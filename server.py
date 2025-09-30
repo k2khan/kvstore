@@ -1,43 +1,108 @@
 from protocol import Request, Response
+from storage import Operation, Storage
+import logging
+import socket
+import threading
 
-"""
-Goal: TCP server that listens for connections and processes requests.
 
-Use socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-Use socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) to avoid "address already in use"
-Read data in chunks: client_socket.recv(4096)
-Keep reading until you see b"\n"
-Decode with .decode('utf-8')
-Send with client_socket.sendall(data.encode('utf-8'))
-Use threading.Thread(target=self._handle_client, args=(client_socket,))
-"""
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 class KVServer:
     def __init__(self, host: str = "localhost", port: int = 5000):
-        # TODO: Store host, port
-        # TODO: Create storage instance
-        # TODO: Create server socket
-        pass
+        self.host = host
+        self.port = port
+        self.storage = Storage()
+        self._running = False
+        self._server_socket = None
 
     def start(self):
-        # TODO: Create TCP socket, bing to host:port, listen
-        # TODO: Accept connections in a loop
-        # TODO: For each connection, spawn a thread to handle it
-        # Call self._handle_client(client_socket) in the thread
-        pass
+        self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._server_socket.bind((self.host, self.port))
+        self._server_socket.listen(5)
+        self._running = True
+
+        logger.info(f"KV Server started on {self.host}:{self.port}")
+        
+        while self._running:
+            try:
+                client_socket, address = self._server_socket.accept()
+                logger.info(f"Connection from {address}")
+                
+                # Handle each client in separate thread
+                client_thread = threading.Thread(
+                    target=self._handle_client,
+                    args=(client_socket,)
+                )
+                client_thread.daemon = True
+                client_thread.start()
+                
+            except Exception as e:
+                if self._running:
+                    logger.error(f"Error accepting connection: {e}")
+
 
     def _handle_client(self, client_socket):
-        # TODO: Read data from socket until newline
-        # TODO: Parse the json request (_process_request)
-        # TODO: Send response back as JSON + newline
-        # TODO: Close socket when done
-        pass
+        """Handle a single client connection."""
+        try:
+            while True:
+                # Read request (newline-delimited JSON)
+                data = b""
+                while b"\n" not in data:
+                    chunk = client_socket.recv(4096)
+                    if not chunk:
+                        return  # Client disconnected
+                    data += chunk
+                
+                request_data = data.decode('utf-8').strip()
+                logger.debug(f"Received: {request_data}")
+                
+                # Process request
+                try:
+                    request = Request.from_json(request_data)
+                    response = self._process_request(request)
+                except Exception as e:
+                    response = Response(success=False, error=str(e))
+                
+                # Send response
+                response_data = response.to_json() + "\n"
+                client_socket.sendall(response_data.encode('utf-8'))
+                
+        except Exception as e:
+            logger.error(f"Error handling client: {e}")
+        finally:
+            client_socket.close()
 
     def _process_request(self, request: Request) -> Response:
-        # TODO: Check request.operation
-        # If "GET": call self.storage.get()
-        # If "PUT": call self.storage.put()
-        # If "DELETE": call self.storage.delete()
-        # If "PING": return success response
-        # Return appropriate response object
-        pass
+        """Process a client request and return response."""
+        op = request.operation
+        
+        if op == Operation.GET.value:
+            value = self.storage.get(request.key)
+            if value is not None:
+                return Response(success=True, value=value)
+            else:
+                return Response(success=False, error="Key not found")
+        
+        elif op == Operation.PUT.value:
+            success = self.storage.put(request.key, request.value, request.timestamp)
+            return Response(success=success)
+        
+        elif op == Operation.DELETE.value:
+            success = self.storage.delete(request.key)
+            return Response(success=success)
+        
+        elif op == Operation.PING.value:
+            return Response(success=True, value="PONG")
+        
+        else:
+            return Response(success=False, error=f"Unknown operation: {op}")
+    
+    def stop(self):
+        """Stop the server."""
+        self._running = False
+        if self._server_socket:
+            self._server_socket.close()
+        logger.info("Server stopped")
 
