@@ -1,37 +1,51 @@
 from typing import Optional
+import json
 
-"""
-Goal: Define request/response format for client-server communication. Use JSON for simplicity.
-
-Use json.dumps() and json.loads()
-Operations: "GET", "PUT", "DELETE", "PING"
-"""
 class Request:
+    """
+    Client request format.
+    
+    Example JSON:
+    {"op": "PUT", "key": "user:123", "value": "john", "timestamp": 1234567890.0}
+    """
     def __init__(self, operation: str, key: str, value: Optional[str] = None, timestamp: Optional[float] = None):
-        # TODO: Store these as instance variables
-        pass
-
+        self.operation = operation
+        self.key = key
+        self.value = value
+        self.timestamp = timestamp
+    
     def to_json(self) -> str:
-        # TODO: Convert to JSON string
-        # Format: {"op": "GET", "key": "user:123", "value": "john", "timestamp": 123.45}
-        pass
+        return json.dumps({
+            "op": self.operation,
+            "key": self.key,
+            "value": self.value,
+            "timestamp": self.timestamp
+        })
 
     @staticmethod
     def from_json(data: str) -> 'Request':
-        # TODO: Parse JSON string and create Request object
-        pass
+        obj = json.loads(data)
+        return Request(operation=obj["op"], key=obj["key"], value=obj.get("value"), timestamp=obj.get("timestamp"))
 
 class Response:
+    """
+    Server response format.
+    
+    Example JSON:
+    {"success": true, "value": "john", "error": null}
+    """
     def __init__(self, success: bool, value: Optional[str] = None, error: Optional[str] = None):
-        # TODO: Store these as instance variables
-        pass
+        self.success = success
+        self.value = value
+        self.error = error
 
     def to_json(self) -> str:
-        # TODO: Convert to JSON string
-        # Format: {"sucess": true, "value": "john", "error": null}
-        pass
-    
-    pass
-    def from_json(self, data: str) -> 'Respone':
-        # TODO:  Pqrse JSON string and create response object
-        pass
+        return json.dumps({
+            "success": self.success,
+            "value": self.value,
+            "error": self.error
+        })
+
+    def from_json(self, data: str) -> 'Response':
+        obj = json.loads(data)
+        return Response(success=obj["success"], value=obj.get("value"), error=obj.get("error"))
