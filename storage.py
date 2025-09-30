@@ -1,31 +1,46 @@
-from typing import Optional
+from datetime import time
+from typing import List, Optional
+import threading
 
-"""
-Goal: Thread-safe in-memory hash map that stores key-value pairs with timestamps.
-
-Use threading.RLock() for the lock
-Use with self._lock: to acquire/release automatically
-Store as self._data[key] = (value, timestamp)
-"""
 class Storage:
     def __init__(self):
-        # TODO: Create a dictionary to store (value, timestamp) tuples
-        # TODO: Create a threading lock for thead safety
-        pass
+        self.store = {}
+        self._lock = threading.RLock()
 
     def get(self, key: str) -> Optional[str]:
-        # TODO: Return value if key exists, None otherwise
-        # Use the lock to make it thread safe
-        pass
+        with self._lock:
+            if key in self.store:
+                return self.store[key]
+            return None
     
     def put(self, key: str, value: str, timestamp: Optional[float] = None) -> bool:
-        # TODO: Store key-value pair with timestamp
-        # If timestamp is None, use time.time()
-        # Implement last-write wins: reject if incoming timestamp is older
-        # Return True if stored, False if rejected
-        pass
+        if not timestamp:
+            timestamp = time.time()
+
+        with self._lock:
+            if key in self.store:
+                last_timestamp = self.store[key][1]
+                
+                if timestamp < last_timestamp:
+                    return False
+
+                self.store[key] = (value, timestamp)
+                return True
+
+            self.store[key] = (value, timestamp)
+            return True
 
     def delete(self, key: str) -> bool:
-        # TODO: Delete key if it exists
-        # Return True if deleted, False if key didn't exist
-        pass
+        with self._lock:
+            if key in self.store:
+                del self.store[key]
+                return True
+            return False
+
+    def size(self) -> int:
+        with self._lock:
+            return len(self.store)
+    
+    def keys(self) -> List[str]:
+        with self._lock:
+            return list(self.store.keys())
