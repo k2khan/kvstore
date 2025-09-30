@@ -1,6 +1,13 @@
 from datetime import time
+from enum import Enum
 from typing import Dict, List, Optional
 import threading
+
+class Operation(Enum):
+    GET = "GET"
+    PUT = "PUT"
+    DELETE = "DELETE"
+    PING = "PING"
 
 class Storage:
     def __init__(self):
