@@ -1,16 +1,16 @@
 from datetime import time
-from typing import List, Optional
+from typing import Dict, List, Optional
 import threading
 
 class Storage:
     def __init__(self):
-        self.store = {}
+        self.store: Dict[str, tuple] = {}
         self._lock = threading.RLock()
 
     def get(self, key: str) -> Optional[str]:
         with self._lock:
             if key in self.store:
-                return self.store[key]
+                return self.store[key][0]
             return None
     
     def put(self, key: str, value: str, timestamp: Optional[float] = None) -> bool:
