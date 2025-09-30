@@ -1,6 +1,6 @@
 # Project Roadmap
 
-## Phase 1: Single-Node KV Store (Week 1-2)
+## Phase 1: Single-Node KV Store
 Build the foundation without distribution.
 
 ### Core Features
@@ -14,7 +14,7 @@ Build the foundation without distribution.
 
 ---
 
-## Phase 2: Add Replication (Week 3-4)
+## Phase 2: Add Replication
 Make it distributed across multiple nodes.
 
 ### Features
@@ -30,7 +30,7 @@ Make it distributed across multiple nodes.
 
 ---
 
-## Phase 3: Consistent Hashing & Partitioning (Week 5-6)
+## Phase 3: Consistent Hashing & Partitioning 
 Scale beyond the memory of a single node.
 
 ### Features
@@ -45,7 +45,7 @@ Scale beyond the memory of a single node.
 
 ---
 
-## Phase 4: Failure Detection & Recovery (Week 7-8)
+## Phase 4: Failure Detection & Recovery 
 Make it production-grade resilient.
 
 ### Features
@@ -56,7 +56,7 @@ Make it production-grade resilient.
 
 ---
 
-## Phase 5: Polish & Observability (Week 9+)
+## Phase 5: Polish & Observability 
 Make it real.
 
 ### Features
