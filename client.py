@@ -1,40 +1,62 @@
-"""
-Goal: Client library to connect to the server and send requests.
+import socket
+from typing import Optional
 
+from protocol import Request, Response
+from storage import Operation
 
-"""
 class KVClient:
-    def __init__(self, host: str = "localhost", port: int = 5000):
-        # TODO: Store host, port
-        # TODO: Initialize socket to None
-        pass
+    """
+    Client for connecting to KV store server.
     
+    Usage:
+        client = KVClient("localhost", 5000)
+        client.connect()
+        client.put("key1", "value1")
+        value = client.get("key1")
+        client.close()
+    """
+    def __init__(self, host: str = "localhost", port: int = 5000):
+        self.host = host
+        self.port = port
+        self._socket = None
+
     def connect(self):
-        # TODO: Create socket and connect to server
-        pass
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket.connect((self.host, self.port))
     
     def _send_request(self, request: Request) -> Response:
-        # TODO: Serialize request to JSON + newline
-        # TODO: Send to server
-        # TODO: Read response until newline
-        # TODO: Parse and return Response object
-        pass
+        request_data = request.to_json() + '\n'
+        self._socket.sendall(data.encode("utf-8"))
+
+        response_data = b""
+        while b'\n' not in response_data:
+            chunk = self._socket.recv(4096)
+            if not chunk:
+                raise ConnectionError("Server closed connection.")
+            response_data += chunk
+        
+        return Response.from_json(response_data.decode("utf-8").strip())
     
     def get(self, key: str) -> Optional[str]:
-        # TODO: Create GET request
-        # TODO: Send and return the value from response
-        pass
+        request = Request(Operation.GET.value, key)
+        response = self._send_request(request)
+
+        if response.success:
+            return response.value
+        return None
     
     def put(self, key: str, value: str, timestamp: Optional[float] = None) -> bool:
-        # TODO: Create PUT request
-        # TODO: Send and return success status
-        pass
+        request = Request(Operation.PUT.value, key, value, timestamp)
+        response = self._send_request(request)
+
+        return response.success
     
     def delete(self, key: str) -> bool:
-        # TODO: Create DELETE request
-        # TODO: Send and return success status
-        pass
-    
+        request = Request(Operation.DELETE.value, key)
+        response = self._send_request(request)
+
+        return response.success
+
     def close(self):
-        # TODO: Close the socket
-        pass
+        if self._socket:
+            self._socket.close()
