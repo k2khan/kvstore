@@ -11,7 +11,7 @@ class Storage:
         with self._lock:
             if key not in self.store:
                 return None
-            return self.store[key]
+            return self.store[key][0]
 
     def put(self, key: str, value: Optional[str] = None, timestamp: Optional[float] = None) -> bool:
         with self._lock:

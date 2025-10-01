@@ -21,6 +21,7 @@ class KVServer:
 
         self._running = True
         self._socket.bind((self.host, self.port))
+        self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._socket.listen(5) # accept a max of 5 connections
 
         while self._running:
@@ -28,8 +29,8 @@ class KVServer:
                 client_socket, address = self._socket.accept()
                 logger.info(f"Accepted connection from addres: {address}")
                 client_thread = threading.Thread(target=self._handle_client, args=(client_socket,))
-                client_thread.start()
                 client_thread.daemon = True
+                client_thread.start()
             
             except Exception as e:
                 if self._running:
@@ -56,7 +57,7 @@ class KVServer:
                     request = Request.from_json(request_data)
                     response = self._process_request(request)
                 except Exception as e:
-                    logger.info("Unable to process request: {request_data}.")
+                    logger.error(f"Unable to process request: {request_data}. Error: {e}")
 
                 response_data = response.to_json() + '\n'
                 client_socket.send(response_data.encode("utf-8"))

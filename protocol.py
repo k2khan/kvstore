@@ -10,7 +10,7 @@ class Request:
     Example JSON:
     {"op": "GET", "key": "user123", "value": "5", "timestamp": 1234567890.0}
     """
-    def __init__(self, operation: Operation, key: str, value: Optional[str] = None, timestamp: Optional[float] = None):
+    def __init__(self, operation: str, key: str, value: Optional[str] = None, timestamp: Optional[float] = None):
         self.operation = operation
         self.key = key
         self.value = value
