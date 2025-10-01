@@ -1,40 +1,32 @@
-from datetime import time
-from enum import Enum
-from typing import Dict, List, Optional
+from typing import Optional
 import threading
-
-class Operation(Enum):
-    GET = "GET"
-    PUT = "PUT"
-    DELETE = "DELETE"
-    PING = "PING"
+import time
 
 class Storage:
     def __init__(self):
-        self.store: Dict[str, tuple] = {}
+        self.store = {}
         self._lock = threading.RLock()
 
     def get(self, key: str) -> Optional[str]:
         with self._lock:
-            if key in self.store:
-                return self.store[key][0]
-            return None
-    
-    def put(self, key: str, value: str, timestamp: Optional[float] = None) -> bool:
-        if not timestamp:
-            timestamp = time.time()
+            if key not in self.store:
+                return None
+            return self.store[key]
 
+    def put(self, key: str, value: Optional[str] = None, timestamp: Optional[float] = None) -> bool:
         with self._lock:
-            if key in self.store:
-                last_timestamp = self.store[key][1]
-                
-                if timestamp < last_timestamp:
-                    return False
+            if not timestamp:
+                timestamp = time.time()
 
+            if key not in self.store:
                 self.store[key] = (value, timestamp)
-                return True
+            else:
+                _, previous_timestamp = self.store[key]
+                if timestamp > previous_timestamp: # ensure last write wins
+                    self.store[key] = (value, timestamp)
+                else:
+                    return False # didn't successfully write... return false
 
-            self.store[key] = (value, timestamp)
             return True
 
     def delete(self, key: str) -> bool:
@@ -43,11 +35,3 @@ class Storage:
                 del self.store[key]
                 return True
             return False
-
-    def size(self) -> int:
-        with self._lock:
-            return len(self.store)
-    
-    def keys(self) -> List[str]:
-        with self._lock:
-            return list(self.store.keys())
