@@ -24,7 +24,10 @@ class KVClient:
                 break
             response_data += chunk
 
-        return Response.from_json(response_data.decode("utf-8"))
+        if not response_data:
+            raise ConnectionError("Server closed connection without sending a response")
+
+        return Response.from_json(response_data.decode("utf-8").strip())
         
     def get(self, key: str) -> Optional[str]:
         request = Request(Operation.GET.value, key)
